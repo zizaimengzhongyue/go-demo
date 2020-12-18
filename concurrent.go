@@ -6,33 +6,32 @@ package main
 
 import (
 	"fmt"
+	"sync"
 )
 
 func concurrent(arr []int, num int, fn func(int) int) []int {
+	wg := &sync.WaitGroup{}
 	ch := make(chan int)
 	done := make(chan bool)
-	ok := make(chan bool)
-	go func() {
-		for i, _ := range arr {
-			ch <- i
-		}
-		done <- true
-	}()
 	for i := 0; i < num; i++ {
-		go func(ch chan int) {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
 			for {
 				select {
-				case <-ok:
+				case k := <-ch:
+					arr[k] = fn(arr[k])
+				case <-done:
 					return
-				case x := <-ch:
-					arr[x] = fn(arr[x])
-					break
 				}
 			}
-		}(ch)
+		}()
 	}
-	<-done
-	close(ok)
+	for i := 0; i < len(arr); i++ {
+		ch <- i
+	}
+	close(done)
+	wg.Wait()
 	return arr
 }
 
