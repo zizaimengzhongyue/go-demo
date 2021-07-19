@@ -6,9 +6,9 @@ import (
 
 func main() {
 	String()
+	Set()
 	List()
 	Hash()
-	Set()
 	ZSet()
 	fmt.Println("finished")
 }
